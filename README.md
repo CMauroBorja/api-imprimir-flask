@@ -22,3 +22,6 @@ Proyecto en desarrollo activo, actualmente **operativo en dos locales comerciale
 
 ## Proyecto personal
 Sistema desarrollado como proyecto personal productivo, aplicado en entornos reales de operación comercial.
+
+## Frontend del proyecto
+Repositorio frontend: https://github.com/CMauroBorja/app-web-ordenes.git
