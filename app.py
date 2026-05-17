@@ -1,12 +1,11 @@
-from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
-from PIL import Image
-import os, re, win32print, win32api
+from flask import request, jsonify
 from datetime import datetime
-import time
-import logging
-import unicodedata
+import os, re, time, logging, unicodedata
+from PIL import Image
+import win32print
+
+from app.database.db import db
+from app.models import Empleado, Registro
 
 PRINTER_COMMANDS = {
     'INIT': b'\x1B\x40',           # Inicializar impresora
@@ -23,26 +22,9 @@ PRINTER_COMMANDS = {
     'LINE_FEED': b'\x0A',            # Salto de línea
 }
 
-# 1. Configuración de la aplicación
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# 2. Configuración de la base de datos
-SERVER = 'localhost\\SQLEXPRESS'
-DATABASE = 'ElImperioDeLosBolsosBelen'
-DRIVER = 'ODBC Driver 17 for SQL Server'
-USERNAME = os.getenv('SQL_USER', 'sa')
-PASSWORD = os.getenv('SQL_PASSWORD', '1234')
-
-app.config["SQLALCHEMY_DATABASE_URI"] = f"mssql+pyodbc://{USERNAME}:{PASSWORD}@{SERVER}/{DATABASE}?driver={DRIVER}&TrustServerCertificate=yes&charset=utf8"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# 3. Inicialización de SQLAlchemy
-db = SQLAlchemy(app)
 
 # 5. Funciones auxiliares
 def validar_datos_numericos(data):
@@ -634,48 +616,3 @@ def reimprimir_orden(id):
         
     except Exception as e:
         return jsonify({"error": f"Error al reimprimir la orden: {str(e)}"}), 500
-
-# 7. Inicialización de la base de datos
-with app.app_context():
-    try:
-        db.engine.connect()
-        print("✅ Conexión exitosa a SQL Server")
-        db.create_all()
-        print("✅ Base de datos 'ElImperioDeLosBolsoBelen' verificada")
-        print("✅ Tabla 'arreglos' lista para usar")
-        
-        # Verificar configuración
-        verificar_configuracion_db()
-        
-        admin_empleado = Empleado.query.filter_by(codigo="ADMIN").first()
-        if not admin_empleado:
-            nuevo_admin = Empleado(
-                nombre="ADMINISTRADOR",
-                telefono="0000000000",
-                codigo="ADMIN",
-                contrasena="0000",
-                administrador=True
-            )
-            db.session.add(nuevo_admin)
-            db.session.commit()
-            print("✅ Empleado administrador creado por defecto")
-        print("\n📊 Sistema listo para recibir datos")
-    except Exception as e:
-        print("\n❌ Error de inicialización:")
-        if "Login failed" in str(e):
-            print("  → Credenciales SQL Server incorrectas")
-        elif "Cannot open database" in str(e):
-            print("  → La base de datos no existe")
-        elif "Server is not found" in str(e):
-            print("  → SQL Server no está corriendo")
-        else:
-            print(f"  → {str(e)}")
-        print("\n💡 Verifica:")
-        print("  1. Que SQL Server esté corriendo")
-        print("  2. Las credenciales de SQL Server")
-        print("  3. Que la base de datos 'ElImperioDeLosBolsoBelen' exista")
-        raise e
-
-# 8. Punto de entrada de la aplicación
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=False)
