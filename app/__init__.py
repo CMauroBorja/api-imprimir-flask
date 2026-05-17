@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from app.config.settings import Config
 from app.database.db import db
+from app.bootstrap.startup import initialize_database
 
 def create_app():
     app = Flask(__name__)
