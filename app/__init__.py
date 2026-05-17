@@ -17,6 +17,6 @@ def create_app():
     from app.models import Empleado, Registro
     
     with app.app_context():
-        db.create_all()
+        initialize_database()
     
     return app

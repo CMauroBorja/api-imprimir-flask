@@ -44,33 +44,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # 3. Inicialización de SQLAlchemy
 db = SQLAlchemy(app)
 
-# 4. Definición del modelo
-class Empleado(db.Model):
-    __tablename__ = 'empleados'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    telefono = db.Column(db.String(16), nullable=False)
-    codigo = db.Column(db.String(50), unique=True, nullable=False)
-    contrasena = db.Column(db.String(100), nullable=False)
-    administrador = db.Column(db.Boolean, default=False, nullable=False)
-
-class Registro(db.Model):
-    __tablename__ = 'arreglos'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombreCliente = db.Column(db.String(100), nullable=False)
-    fechaEntrega = db.Column(db.DateTime, nullable=False)
-    fechaCreacion = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    valorTotal = db.Column(db.Numeric(10, 2), nullable=False)
-    abono = db.Column(db.Numeric(10, 2), nullable=False)
-    saldo = db.Column(db.Numeric(10, 2), nullable=False)
-    celular = db.Column(db.String(10), nullable=False)
-    telefono = db.Column(db.String(16), nullable=True)
-    # Usar UnicodeText en lugar de String para manejar mejor los caracteres especiales
-    observaciones = db.Column(db.UnicodeText(500), nullable=False)
-    vendedor = db.Column(db.String(50), nullable=False)
-    finalizada = db.Column(db.Boolean, default=False, nullable=False) 
-    medioPago = db.Column(db.String(20), nullable=False, default='efectivo')
-
 # 5. Funciones auxiliares
 def validar_datos_numericos(data):
     """Valida los valores numéricos y su relación"""
