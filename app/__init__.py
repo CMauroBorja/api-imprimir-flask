@@ -5,6 +5,7 @@ from app.config.settings import Config
 from app.database.db import db
 from app.bootstrap.startup import initialize_database
 from app.controllers.print_controller import print_bp
+from app.controllers.employee_controller import employee_bp
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +17,7 @@ def create_app():
     db.init_app(app)
     
     app.register_blueprint(print_bp)
+    app.register_blueprint(employee_bp)
     
     from app.models import Empleado, Registro
     
