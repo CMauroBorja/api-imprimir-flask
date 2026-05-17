@@ -1,7 +1,6 @@
 from flask import request, jsonify
 from datetime import datetime
 import os, re, time, logging, unicodedata
-from PIL import Image
 import win32print
 
 from app.database.db import db
@@ -39,36 +38,6 @@ def validar_datos_numericos(data):
         return True, ""
     except ValueError:
         return False, "Los valores numéricos son inválidos"
-
-def verificar_configuracion_db():
-    """Verifica que la configuración de la base de datos sea correcta para UTF-8"""
-    try:
-        with app.app_context():
-            # Verificar la codificación de la columna observaciones
-            result = db.session.execute(db.text("""
-                SELECT 
-                    COLUMN_NAME,
-                    DATA_TYPE,
-                    CHARACTER_MAXIMUM_LENGTH,
-                    COLLATION_NAME
-                FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_NAME = 'arreglos' AND COLUMN_NAME = 'observaciones'
-            """)).fetchone()
-            
-            if result:
-                print(f"Configuración columna observaciones:")
-                print(f"  Tipo: {result[1]}")
-                print(f"  Longitud: {result[2]}")
-                print(f"  Collation: {result[3]}")
-                
-                if result[1] == 'varchar':
-                    print("⚠️  ADVERTENCIA: La columna es VARCHAR, considera cambiar a NVARCHAR para mejor soporte Unicode")
-                    print("   Ejecuta: ALTER TABLE arreglos ALTER COLUMN observaciones NVARCHAR(500)")
-            else:
-                print("❌ No se pudo verificar la configuración de la columna observaciones")
-    except Exception as e:
-        print(f"Error al verificar configuración DB: {e}")
-
 
 # 6. Rutas de la API
 @app.route("/login", methods=["POST"])
@@ -133,19 +102,6 @@ def get_employee(codigo):
         "administrador": empleado.administrador
     }), 200
     
-@app.route("/getAllEmployees", methods=["GET"])
-def obtener_empleados():
-    try:
-        empleados = Empleado.query.all()
-        return jsonify([
-            {
-                "codigo": emp.codigo,
-                "nombre": emp.nombre
-            } for emp in empleados
-        ]), 200
-    except Exception as e:
-        return jsonify({"error": f"Error al obtener empleados: {str(e)}"}), 500
-
 @app.route("/updateEmployee/<codigo>", methods=["PUT"])
 def update_employee(codigo):
     data = request.json
