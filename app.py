@@ -170,32 +170,6 @@ def recibir_datos():
         #logger.error(f"❌ Error al guardar: {str(e)}")
         return jsonify({"error": f"Error al guardar los datos: {str(e)}"}), 500
 
-@app.route("/getOrders", methods=["GET"])
-def obtener_ordenes():
-    try:
-        registros = Registro.query.order_by(Registro.fechaCreacion.desc()).all()
-        
-        resultado = [
-            {
-                "id": registro.id,
-                "nombreCliente": registro.nombreCliente,
-                "fechaEntrega": registro.fechaEntrega.strftime('%Y-%m-%d %H:%M'),
-                "fechaCreacion": registro.fechaCreacion.strftime('%Y-%m-%d %H:%M'),
-                "valorTotal": float(registro.valorTotal),
-                "abono": float(registro.abono),
-                "saldo": float(registro.saldo),
-                "celular": registro.celular,
-                "telefono": registro.telefono,
-                "observaciones": registro.observaciones,
-                "vendedor": registro.vendedor,
-                "finalizada": registro.finalizada 
-            }
-            for registro in registros
-        ]
-        return jsonify(resultado), 200
-    except Exception as e:
-        return jsonify({"error": f"Error al obtener las órdenes: {str(e)}"}), 500
-
 @app.route("/deleteOrder/<int:id>", methods=["DELETE"])
 def eliminar_orden(id):
     try:
