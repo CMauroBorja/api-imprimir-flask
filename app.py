@@ -39,34 +39,6 @@ def validar_datos_numericos(data):
     except ValueError:
         return False, "Los valores numéricos son inválidos"
 
-# 6. Rutas de la API
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.json
-    required_fields = ["codigo", "contrasena"]
-
-    # Validar que los campos requeridos estén presentes
-    if not data or any(field not in data for field in required_fields):
-        return jsonify({"error": "Faltan datos requeridos"}), 400
-
-    # Buscar el empleado por código
-    empleado = Empleado.query.filter_by(codigo=data["codigo"].strip()).first()
-
-    if not empleado:
-        return jsonify({"error": "El código de usuario no es válido"}), 404
-
-    # Validar la contraseña
-    if empleado.contrasena != data["contrasena"].strip():
-        return jsonify({"error": "La contraseña es incorrecta"}), 401
-
-    # Si las credenciales son correctas, devolver los datos del usuario
-    return jsonify({
-        "message": "Inicio de sesión exitoso",
-        "nombre": empleado.nombre,
-        "codigo": empleado.codigo,
-        "administrador": empleado.administrador
-    }), 200
-
 @app.route("/createEmployee", methods=["POST"])
 def crear_empleado():
     data = request.json
