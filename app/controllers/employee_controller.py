@@ -53,3 +53,18 @@ def create_employee():
     db.session.commit()
     
     return jsonify({"message": "Empleado creado exitosamente"}), 201
+
+@employee_bp.route("/getEmployee/<int:employee_id>", methods=["GET"])
+def get_employee(employee_id):
+    empleado = Empleado.query.get(employee_id)
+    
+    if not empleado:
+        return jsonify({"error": "Empleado no encontrado"}), 404
+    
+    return jsonify({
+        "id": empleado.id,
+        "nombre": empleado.nombre,
+        "telefono": empleado.telefono,
+        "codigo": empleado.codigo,
+        "administrador": empleado.administrador
+    })

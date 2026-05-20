@@ -38,41 +38,6 @@ def validar_datos_numericos(data):
         return True, ""
     except ValueError:
         return False, "Los valores numéricos son inválidos"
-
-@app.route("/createEmployee", methods=["POST"])
-def crear_empleado():
-    data = request.json
-    required_fields = ["nombre", "telefono", "codigo", "contrasena", "administrador"]
-
-    if not data or any(field not in data for field in required_fields):
-        return jsonify({"error": "Faltan datos requeridos"}), 400
-
-    try:
-        nuevo_empleado = Empleado(
-            nombre=data["nombre"].strip(),
-            telefono=data["telefono"].strip(),
-            codigo=data["codigo"].strip(),
-            contrasena=data["contrasena"].strip(),
-            administrador=bool(data["administrador"])
-        )
-        db.session.add(nuevo_empleado)
-        db.session.commit()
-        return jsonify({"message": "Empleado creado correctamente", "id": nuevo_empleado.id}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"Error al crear el empleado: {str(e)}"}), 500
-
-@app.route("/getEmployee/<codigo>", methods=["GET"])
-def get_employee(codigo):
-    empleado = Empleado.query.filter_by(codigo=codigo).first()
-    if not empleado:
-        return jsonify({"error": "Empleado no encontrado"}), 404
-    return jsonify({
-        "nombre": empleado.nombre,
-        "telefono": empleado.telefono,
-        "codigo": empleado.codigo,
-        "administrador": empleado.administrador
-    }), 200
     
 @app.route("/updateEmployee/<codigo>", methods=["PUT"])
 def update_employee(codigo):
