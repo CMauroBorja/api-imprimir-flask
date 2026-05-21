@@ -10,34 +10,9 @@ from app.services.printer_service import (
     imprimir_solo_cliente
 )
 
-
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# 5. Funciones auxiliares
-def validar_datos_numericos(data):
-    """Valida los valores numéricos y su relación"""
-    try:
-        valor_total = float(data["valorTotal"])
-        abono = float(data["abono"])
-        saldo = float(data["saldo"])
-
-        # Validar valores positivos
-        if valor_total <= 0:
-            return False, "El valor total debe ser mayor que 0"
-        if abono < 0:
-            return False, "El abono no puede ser negativo"
-        if saldo < 0:
-            return False, "El saldo no puede ser negativo"
-
-        # Validar que saldo = valorTotal - abono
-        if abs(saldo - (valor_total - abono)) > 0.01:
-            return False, "El saldo debe ser igual al valor total menos el abono"
-
-        return True, ""
-    except ValueError:
-        return False, "Los valores numéricos son inválidos"
     
 @app.route("/updateEmployee/<codigo>", methods=["PUT"])
 def update_employee(codigo):

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.models import Registro, Empleado
 from app.database.db import db
-from app.services.printer_service import imprimir_registro
+from app.services.printer_service import (imprimir_registro, imprimir_solo_cliente)
 from datetime import datetime
 import re
 
@@ -213,4 +213,68 @@ def submit_data():
 
         return jsonify({
             "error": f"Error al guardar los datos: {str(e)}"
+        }), 500
+        
+@order_bp.route("/reprintOrder/<int:id>", methods=["POST"])
+def reprint_order(id):
+    data = request.json
+    reprint_type = data.get("reprintType", "1")
+
+    try:
+        registro = Registro.query.get(id)
+
+        if not registro:
+            return jsonify({
+                "error": "Orden no encontrada"
+            }), 404
+
+        if reprint_type == "1":
+            imprimir_registro(
+                registro,
+                solo_negocio=False,
+                cantidad_copias=1
+            )
+
+            message = (
+                "Reimpresas: copia del cliente "
+                "y copia del negocio"
+            )
+
+        elif reprint_type == "2":
+            imprimir_solo_cliente(
+                registro
+            )
+
+            message = (
+                "Reimpresa: solo copia "
+                "del cliente"
+            )
+
+        elif reprint_type == "3":
+            imprimir_registro(
+                registro,
+                solo_negocio=True,
+                cantidad_copias=1
+            )
+
+            message = (
+                "Reimpresa: solo copia "
+                "del negocio"
+            )
+
+        else:
+            return jsonify({
+                "error":
+                "Tipo de reimpresión inválido"
+            }), 400
+
+        return jsonify({
+            "message": message
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error":
+            f"Error al reimprimir "
+            f"la orden: {str(e)}"
         }), 500
