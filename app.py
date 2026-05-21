@@ -97,32 +97,3 @@ def actualizar_orden(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Error al actualizar la orden: {str(e)}"}), 500
-
-@app.route("/reprintOrder/<int:id>", methods=["POST"])
-def reimprimir_orden(id):
-    data = request.json
-    reprint_type = data.get("reprintType", "1")
-    
-    try:
-        # Buscar la orden en la base de datos
-        registro = Registro.query.get(id)
-        if not registro:
-            return jsonify({"error": "Orden no encontrada"}), 404
-
-        # Determinar qué imprimir según el tipo
-        if reprint_type == "1":  # Cliente y Negocio
-            imprimir_registro(registro, solo_negocio=False, cantidad_copias=1)
-            message = "Reimpresas: copia del cliente y copia del negocio"
-        elif reprint_type == "2":  # Solo Cliente
-            imprimir_solo_cliente(registro)
-            message = "Reimpresa: solo copia del cliente"
-        elif reprint_type == "3":  # Solo Negocio
-            imprimir_registro(registro, solo_negocio=True, cantidad_copias=1)
-            message = "Reimpresa: solo copia del negocio"
-        else:
-            return jsonify({"error": "Tipo de reimpresión inválido"}), 400
-
-        return jsonify({"message": message}), 200
-        
-    except Exception as e:
-        return jsonify({"error": f"Error al reimprimir la orden: {str(e)}"}), 500
