@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from app.models import Registro
-from app.services.printer_service import imprimir_registro
+from app.services.printing.printer_service import imprimir_registro
 
 print_bp = Blueprint("print", __name__)
 

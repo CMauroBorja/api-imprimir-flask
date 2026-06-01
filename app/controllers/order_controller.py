@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from app.models import Registro, Empleado
 from app.database.db import db
-from app.services.printer_service import (imprimir_registro, imprimir_solo_cliente)
+from app.services.printing.printer_service import (imprimir_registro, imprimir_solo_cliente)
 from datetime import datetime
 import re
 

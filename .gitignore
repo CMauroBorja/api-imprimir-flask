@@ -1,6 +1,26 @@
+# Entorno virtual
 venv/
+.venv/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Variables de entorno
 .env
+
+# Bases de datos locales
 *.db
 *.sqlite3
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
