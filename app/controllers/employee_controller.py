@@ -68,3 +68,22 @@ def get_employee(employee_id):
         "codigo": empleado.codigo,
         "administrador": empleado.administrador
     })
+    
+@employee_bp.route("/updateEmployee/<codigo>", methods=["PUT"])
+def update_employee(codigo):
+    data = request.json
+    empleado = Empleado.query.filter_by(codigo=codigo).first()
+    if not empleado:
+        return jsonify({"error": "Empleado no encontrado"}), 404
+
+    if "nombre" in data:
+        empleado.nombre = data["nombre"].strip()
+    if "telefono" in data:
+        empleado.telefono = data["telefono"].strip()
+    if "contrasena" in data and data["contrasena"]:
+        empleado.contrasena = data["contrasena"].strip()
+    if "administrador" in data:
+        empleado.administrador = bool(data["administrador"])
+
+    db.session.commit()
+    return jsonify({"message": "Empleado actualizado correctamente"}), 200
