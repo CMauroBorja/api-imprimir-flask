@@ -1,3 +1,5 @@
+import re
+
 def validar_datos_numericos(data):
     try:
         valor_total = float(data["valorTotal"])
@@ -22,6 +24,21 @@ def validar_datos_numericos(data):
         return True, ""
 
     except ValueError:
+        return False, "Los valores numéricos son inválidos"
+    
+def validar_celular(celular):
+    return re.fullmatch(r"\d{10}", celular)
+
+def validar_nombre_cliente(nombre):
+    return len(nombre.strip()) >= 3
+
+def validar_observaciones(observaciones):
+    if len(observaciones) < 5:
         return False, (
-            "Los valores numéricos son inválidos"
+            "Las observaciones deben tener al menos 5 caracteres"
         )
+
+    if len(observaciones) > 500:
+        return False, "Las observaciones no pueden exceder 500 caracteres"
+
+    return True, ""

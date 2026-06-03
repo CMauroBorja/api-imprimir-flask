@@ -6,7 +6,6 @@ from app.services.order_service import (
     update_order,
     create_order
 )
-from app.validators.order_validator import validar_datos_numericos
 
 order_bp = Blueprint("orders", __name__)
 
@@ -24,14 +23,9 @@ def get_orders():
 def submit_data():
 
     try:
-        response, status = create_order(
-            request.json,
-            validar_datos_numericos
-        )
+        response, status = create_order(request.json)
 
-        return jsonify(
-            response
-        ), status
+        return jsonify(response), status
 
     except Exception as e:
         return jsonify({
@@ -72,7 +66,7 @@ def actualizar_orden(id):
     data = request.json
     
     try:
-        response, status = update_order(id, data, validar_datos_numericos)
+        response, status = update_order(id, data)
         return jsonify(response), status
     except Exception as e:
         return jsonify({

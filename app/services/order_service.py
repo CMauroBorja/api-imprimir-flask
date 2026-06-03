@@ -1,10 +1,15 @@
 from app.models import Registro, Empleado
 from app.database.db import db
 from datetime import datetime
-import re
 from app.services.printing.printer_service import (
     imprimir_registro,
     imprimir_solo_cliente
+)
+from app.validators.order_validator import (
+    validar_datos_numericos,
+    validar_celular,
+    validar_nombre_cliente,
+    validar_observaciones
 )
 
 
@@ -97,67 +102,143 @@ def reprint_order_by_id(order_id, reprint_type):
     }, 400
     
     
-def update_order(order_id, data, validar_datos_numericos):
+def update_order(order_id, data):
     try:
         registro = Registro.query.get(order_id)
 
         if not registro:
-            return ({"error": "Orden no encontrada"}), 404
-        
-        # Validar datos numéricos si se actualizan
-        if any(key in data for key in ["valorTotal", "abono", "saldo"]):
-            # Crear diccionario con valores actuales y actualizados
+            return {
+                "error": "Orden no encontrada"
+            }, 404
+
+        # Validar datos numéricos
+        if any(
+            key in data
+            for key in [
+                "valorTotal",
+                "abono",
+                "saldo"
+            ]
+        ):
             valores = {
-                "valorTotal": float(data.get("valorTotal", registro.valorTotal)),
-                "abono": float(data.get("abono", registro.abono)),
-                "saldo": float(data.get("saldo", registro.saldo))
+                "valorTotal": float(
+                    data.get(
+                        "valorTotal",
+                        registro.valorTotal
+                    )
+                ),
+                "abono": float(
+                    data.get(
+                        "abono",
+                        registro.abono
+                    )
+                ),
+                "saldo": float(
+                    data.get(
+                        "saldo",
+                        registro.saldo
+                    )
+                )
             }
-            valid, error_message = validar_datos_numericos(valores)
-            
+
+            valid, error_message = validar_datos_numericos(
+                valores
+            )
+
             if not valid:
-                return ({"error": error_message}), 400
-            
-        # Actualizar campos con validaciones
+                return {
+                    "error": error_message
+                }, 400
+
         if "nombreCliente" in data:
-            if len(data["nombreCliente"].strip()) < 3:
-                return ({"error": "El nombre del cliente debe tener al menos 3 caracteres"}), 400
-            registro.nombreCliente = data["nombreCliente"].strip()
-            
+
+            if not validar_nombre_cliente(
+                data["nombreCliente"]
+            ):
+                return {
+                    "error":
+                    "El nombre del cliente debe tener al menos 3 caracteres"
+                }, 400
+
+            registro.nombreCliente = (
+                data["nombreCliente"]
+                .strip()
+            )
+
         if "fechaEntrega" in data:
-            registro.fechaEntrega = datetime.strptime(data["fechaEntrega"], "%Y-%m-%d %H:%M")
-            
+            registro.fechaEntrega = (
+                datetime.strptime(
+                    data["fechaEntrega"],
+                    "%Y-%m-%d %H:%M"
+                )
+            )
+
         if "valorTotal" in data:
-            registro.valorTotal = float(data["valorTotal"])
-            
+            registro.valorTotal = float(
+                data["valorTotal"]
+            )
+
         if "abono" in data:
-            registro.abono = float(data["abono"])
-            
+            registro.abono = float(
+                data["abono"]
+            )
+
         if "saldo" in data:
-            registro.saldo = float(data["saldo"])
-            
+            registro.saldo = float(
+                data["saldo"]
+            )
+
         if "celular" in data:
-            if not re.fullmatch(r"\d{10}", data["celular"]):
-                return ({"error": "El número de celular debe tener exactamente 10 dígitos"}), 400
-            registro.celular = data["celular"]
-            
+
+            if not validar_celular(
+                data["celular"]
+            ):
+                return {
+                    "error":
+                    "El número de celular debe tener exactamente 10 dígitos"
+                }, 400
+
+            registro.celular = (
+                data["celular"]
+            )
+
         if "telefono" in data:
-            registro.telefono = data["telefono"]
-            
+            registro.telefono = (
+                data["telefono"]
+            )
+
         if "observaciones" in data:
-            registro.observaciones = data["observaciones"]
-            
+
+            if not validar_observaciones(
+                data["observaciones"]
+            ):
+                return {
+                    "error":
+                    "Las observaciones no cumplen con los requisitos"
+                }, 400
+
+            registro.observaciones = (
+                data["observaciones"]
+            )
+
         if "finalizada" in data:
-            registro.finalizada = bool(data["finalizada"]) 
-            
+            registro.finalizada = bool(
+                data["finalizada"]
+            )
+
         db.session.commit()
-        
-        return ({"message": "Orden actualizada correctamente"}), 200
+
+        return {
+            "message":
+            "Orden actualizada correctamente"
+        }, 200
+
     except Exception:
         db.session.rollback()
         raise
     
     
-def create_order(data, validar_datos_numericos):
+def create_order(data):
     
     required_fields = [
         "nombreCliente",
@@ -179,16 +260,23 @@ def create_order(data, validar_datos_numericos):
             "error": "Faltan datos requeridos"
         }, 400
 
-    if len(data["nombreCliente"].strip()) < 3:
+    if not validar_nombre_cliente(data["nombreCliente"]):
         return {
             "error":
             "El nombre del cliente debe tener al menos 3 caracteres"
         }, 400
 
-    if not re.fullmatch(
-        r"\d{10}",
-        data["celular"]
-    ):
+    if not validar_celular(data["celular"]):
+        return {
+            "error":
+            "El número de celular debe tener 10 dígitos"
+        }, 400
+
+    if not validar_observaciones(data["observaciones"]):
+        return {
+            "error":
+            "Las observaciones no cumplen con los requisitos"
+        }, 400
         return {
             "error":
             "El número de celular debe tener 10 dígitos"
