@@ -1,89 +1,71 @@
 from flask import Blueprint, jsonify, request
-from app.models import Empleado
-from app.database.db import db
+
+from app.services.employee_service import (
+    get_all_employees,
+    create_employee,
+    get_employee_by_id,
+    update_employee
+)
 
 employee_bp = Blueprint("employees", __name__)
 
+
 @employee_bp.route("/getAllEmployees", methods=["GET"])
-def get_all_employees():
-    empleados = Empleado.query.all()
-    
-    return jsonify([
-        {
-            "id": e.id,
-            "nombre": e.nombre,
-            "telefono": e.telefono,
-            "codigo": e.codigo,
-            "administrador": e.administrador
-        }
-        for e in empleados
-    ])
-    
+def get_all():
+
+    try:
+        return jsonify(get_all_employees()), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
 @employee_bp.route("/createEmployee", methods=["POST"])
-def create_employee():
-    data = request.json
-    
-    required_fields = [
-        "nombre",
-        "telefono",
-        "codigo",
-        "contrasena",
-        "administrador"
-    ]
-    
-    if not data or any(field not in data for field in required_fields):
-        return jsonify({"error": "Faltan datos requeridos"}), 400
-    
-    empleado_existente = Empleado.query.filter_by(
-        codigo=data["codigo"].strip()
-    ).first()
-    
-    if empleado_existente:
-        return jsonify({"error": "El codigo de usuario ya existe"}), 409
-    
-    nuevo = Empleado(
-        nombre=data["nombre"].strip(),
-        telefono=data["telefono"].strip(),
-        codigo=data["codigo"].strip(),
-        contrasena=data["contrasena"].strip(),
-        administrador=data["administrador"]
-    )
-    
-    db.session.add(nuevo)
-    db.session.commit()
-    
-    return jsonify({"message": "Empleado creado exitosamente"}), 201
+def create():
+
+    try:
+        response, status = create_employee(
+            request.json
+        )
+
+        return jsonify(response), status
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
+
 
 @employee_bp.route("/getEmployee/<int:employee_id>", methods=["GET"])
 def get_employee(employee_id):
-    empleado = Empleado.query.get(employee_id)
-    
-    if not empleado:
-        return jsonify({"error": "Empleado no encontrado"}), 404
-    
-    return jsonify({
-        "id": empleado.id,
-        "nombre": empleado.nombre,
-        "telefono": empleado.telefono,
-        "codigo": empleado.codigo,
-        "administrador": empleado.administrador
-    })
-    
+
+    try:
+        response, status = get_employee_by_id(
+            employee_id
+        )
+
+        return jsonify(response), status
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+
 @employee_bp.route("/updateEmployee/<codigo>", methods=["PUT"])
-def update_employee(codigo):
-    data = request.json
-    empleado = Empleado.query.filter_by(codigo=codigo).first()
-    if not empleado:
-        return jsonify({"error": "Empleado no encontrado"}), 404
+def update(codigo):
 
-    if "nombre" in data:
-        empleado.nombre = data["nombre"].strip()
-    if "telefono" in data:
-        empleado.telefono = data["telefono"].strip()
-    if "contrasena" in data and data["contrasena"]:
-        empleado.contrasena = data["contrasena"].strip()
-    if "administrador" in data:
-        empleado.administrador = bool(data["administrador"])
+    try:
+        response, status = update_employee(
+            codigo,
+            request.json
+        )
 
-    db.session.commit()
-    return jsonify({"message": "Empleado actualizado correctamente"}), 200
+        return jsonify(response), status
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
