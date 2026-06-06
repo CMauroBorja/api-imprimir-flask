@@ -6,7 +6,7 @@ from app.database.db import db
 from app.bootstrap.startup import initialize_database
 from app.controllers.print_controller import print_bp
 from app.controllers.employee_controller import employee_bp
-from app.controllers.auth_controller import auth_ph
+from app.controllers.auth_controller import auth_bp
 from app.controllers.order_controller import order_bp
 
 def create_app():
@@ -20,7 +20,7 @@ def create_app():
     
     app.register_blueprint(print_bp)
     app.register_blueprint(employee_bp)
-    app.register_blueprint(auth_ph)
+    app.register_blueprint(auth_bp)
     app.register_blueprint(order_bp)
     
     from app.models import Empleado, Registro
