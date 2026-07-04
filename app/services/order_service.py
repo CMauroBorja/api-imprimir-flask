@@ -1,22 +1,23 @@
-from app.models import Registro, Empleado
-from app.database.db import db
 from datetime import datetime
+
+from app.models import Registro
 from app.services.printing.printer_service import (
     imprimir_registro,
     imprimir_solo_cliente
 )
+
 from app.validators.order_validator import (
-    validar_datos_numericos,
     validar_celular,
+    validar_datos_numericos,
     validar_nombre_cliente,
     validar_observaciones
 )
 
+from app.repositories import order_repository
+
 
 def get_all_orders():
-    registros = Registro.query.order_by(
-        Registro.fechaCreacion.desc()
-    ).all()
+    registros = order_repository.get_all_orders()
 
     return [
         {
@@ -39,26 +40,26 @@ def get_all_orders():
 
 def delete_order_by_id(order_id):
     try:
-        registro = Registro.query.get(order_id)
+        registro = order_repository.get_order_by_id(order_id)
 
         if not registro:
             return {
                 "error": "Orden no encontrada"
             }, 404
 
-        db.session.delete(registro)
-        db.session.commit()
+        order_repository.delete(registro)
+        order_repository.commit()
 
         return {
             "message": "Orden eliminada correctamente"
         }, 200
     except Exception as e:
-        db.session.rollback()
+        order_repository.rollback()
         raise
     
     
 def reprint_order_by_id(order_id, reprint_type):
-    registro = Registro.query.get(order_id)
+    registro = order_repository.get_order_by_id(order_id)
 
     if not registro:
         return {
@@ -104,7 +105,7 @@ def reprint_order_by_id(order_id, reprint_type):
     
 def update_order(order_id, data):
     try:
-        registro = Registro.query.get(order_id)
+        registro = order_repository.get_order_by_id(order_id)
 
         if not registro:
             return {
@@ -226,7 +227,7 @@ def update_order(order_id, data):
                 data["finalizada"]
             )
 
-        db.session.commit()
+        order_repository.commit()
 
         return {
             "message":
@@ -234,7 +235,7 @@ def update_order(order_id, data):
         }, 200
 
     except Exception:
-        db.session.rollback()
+        order_repository.rollback()
         raise
     
     
@@ -277,11 +278,7 @@ def create_order(data):
             "error":
             "Las observaciones no cumplen con los requisitos"
         }, 400
-        return {
-            "error":
-            "El número de celular debe tener 10 dígitos"
-        }, 400
-
+        
     valid, error_message = validar_datos_numericos(data)
 
     if not valid:
@@ -322,9 +319,7 @@ def create_order(data):
             "Las observaciones no pueden exceder 500 caracteres"
         }, 400
 
-    vendedor = Empleado.query.filter_by(
-        codigo=data["vendedor"]
-    ).first()
+    vendedor = order_repository.get_employee_by_code(data["vendedor"])
 
     if not vendedor:
         return {
@@ -334,11 +329,7 @@ def create_order(data):
 
     try:
 
-        ultimo_id = db.session.execute(
-            db.text(
-                "SELECT ISNULL(MAX(id), 0) FROM arreglos"
-            )
-        ).scalar()
+        ultimo_id = order_repository.get_last_order_id()
 
         nuevo_registro = Registro(
             nombreCliente=data["nombreCliente"].strip(),
@@ -364,27 +355,18 @@ def create_order(data):
             medioPago=data["medioPago"].strip()
         )
 
-        db.session.add(
-            nuevo_registro
-        )
+        order_repository.add_order(nuevo_registro)
 
-        db.session.flush()
+        order_repository.flush()
 
         if nuevo_registro.id > (
             ultimo_id + 2
         ):
-            db.session.rollback()
+            order_repository.rollback()
 
-            db.session.execute(
-                db.text(
-                    f"DBCC CHECKIDENT("
-                    f"'arreglos', "
-                    f"RESEED, "
-                    f"{ultimo_id})"
-                )
-            )
+            order_repository.reseed_order_identity(ultimo_id)
 
-            db.session.commit()
+            order_repository.commit()
 
             return {
                 "error":
@@ -413,7 +395,7 @@ def create_order(data):
             cantidad_copias=cantidad_copias
         )
 
-        db.session.commit()
+        order_repository.commit()
 
         return {
             "message":
@@ -423,5 +405,5 @@ def create_order(data):
         }, 201
 
     except Exception:
-        db.session.rollback()
+        order_repository.rollback()
         raise
