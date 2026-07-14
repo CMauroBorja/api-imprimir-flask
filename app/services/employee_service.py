@@ -1,5 +1,5 @@
 from app.models import Empleado
-from app.database.db import db
+from app.repositories import employee_repository
 
 from app.validators.employee_validator import (
     validar_nombre,
@@ -10,7 +10,7 @@ from app.validators.employee_validator import (
 
 
 def get_all_employees():
-    empleados = Empleado.query.all()
+    empleados = employee_repository.get_all()
 
     return [
         {
@@ -25,7 +25,7 @@ def get_all_employees():
 
 
 def get_employee_by_id(employee_id):
-    empleado = Empleado.query.get(employee_id)
+    empleado = employee_repository.get_by_id(employee_id)
 
     if not empleado:
         return {
@@ -79,9 +79,7 @@ def create_employee(data):
             "error": "Contraseña inválida"
         }, 400
 
-    empleado_existente = Empleado.query.filter_by(
-        codigo=data["codigo"].strip()
-    ).first()
+    empleado_existente = employee_repository.get_by_code(data["codigo"].strip())
 
     if empleado_existente:
         return {
@@ -98,15 +96,15 @@ def create_employee(data):
             administrador=bool(data["administrador"])
         )
 
-        db.session.add(nuevo_empleado)
-        db.session.commit()
+        employee_repository.add(nuevo_empleado)
+        employee_repository.commit()
 
         return {
             "message": "Empleado creado exitosamente"
         }, 201
 
     except Exception:
-        db.session.rollback()
+        employee_repository.rollback()
         raise
 
 
@@ -114,9 +112,7 @@ def update_employee(codigo, data):
 
     try:
 
-        empleado = Empleado.query.filter_by(
-            codigo=codigo
-        ).first()
+        empleado = employee_repository.get_by_code(codigo)
 
         if not empleado:
             return {
@@ -158,12 +154,12 @@ def update_employee(codigo, data):
                 data["administrador"]
             )
 
-        db.session.commit()
+        employee_repository.commit()
 
         return {
             "message": "Empleado actualizado correctamente"
         }, 200
 
     except Exception:
-        db.session.rollback()
+        employee_repository.rollback()
         raise

@@ -17,7 +17,7 @@ from app.repositories import order_repository
 
 
 def get_all_orders():
-    registros = order_repository.get_all_orders()
+    registros = order_repository.get_all()
 
     return [
         {
@@ -40,7 +40,7 @@ def get_all_orders():
 
 def delete_order_by_id(order_id):
     try:
-        registro = order_repository.get_order_by_id(order_id)
+        registro = order_repository.get_by_id(order_id)
 
         if not registro:
             return {
@@ -59,7 +59,7 @@ def delete_order_by_id(order_id):
     
     
 def reprint_order_by_id(order_id, reprint_type):
-    registro = order_repository.get_order_by_id(order_id)
+    registro = order_repository.get_by_id(order_id)
 
     if not registro:
         return {
@@ -105,7 +105,7 @@ def reprint_order_by_id(order_id, reprint_type):
     
 def update_order(order_id, data):
     try:
-        registro = order_repository.get_order_by_id(order_id)
+        registro = order_repository.get_by_id(order_id)
 
         if not registro:
             return {
@@ -355,7 +355,7 @@ def create_order(data):
             medioPago=data["medioPago"].strip()
         )
 
-        order_repository.add_order(nuevo_registro)
+        order_repository.add(nuevo_registro)
 
         order_repository.flush()
 

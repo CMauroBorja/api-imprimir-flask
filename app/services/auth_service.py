@@ -1,4 +1,4 @@
-from app.models import Empleado
+from app.repositories import employee_repository
 
 from app.validators.auth_validator import (
     validar_login
@@ -14,9 +14,9 @@ def login_user(data):
             "error": error
         }, 400
 
-    empleado = Empleado.query.filter_by(
-        codigo=data["codigo"].strip()
-    ).first()
+    empleado = employee_repository.get_by_code(
+        data["codigo"].strip()
+    )
 
     if not empleado:
         return {

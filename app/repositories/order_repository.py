@@ -2,13 +2,13 @@ from app.database.db import db
 from app.models import Registro, Empleado
 
 
-def get_all_orders():
+def get_all():
     return Registro.query.order_by(
         Registro.fechaCreacion.desc()
     ).all()
 
 
-def get_order_by_id(order_id):
+def get_by_id(order_id):
     return db.session.get(Registro, order_id)
 
 
@@ -26,7 +26,7 @@ def get_last_order_id():
     ).scalar()
 
 
-def add_order(registro):
+def add(registro):
     db.session.add(registro)
 
 

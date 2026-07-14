@@ -1,14 +1,27 @@
 from flask import Blueprint, jsonify
-from app.models import Registro
-from app.services.printing.printer_service import imprimir_registro
 
-print_bp = Blueprint("print", __name__)
+from app.repositories import order_repository
+from app.services.printing.printer_service import (
+    imprimir_registro
+)
+
+print_bp = Blueprint(
+    "print",
+    __name__
+)
 
 
-@print_bp.route("/test-print/<int:registro_id>", methods=["GET"])
+@print_bp.route(
+    "/test-print/<int:registro_id>",
+    methods=["GET"]
+)
 def test_print(registro_id):
+
     try:
-        registro = Registro.query.get(registro_id)
+
+        registro = order_repository.get_by_id(
+            registro_id
+        )
 
         if not registro:
             return jsonify({
@@ -24,6 +37,7 @@ def test_print(registro_id):
         }), 200
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "error": str(e)
