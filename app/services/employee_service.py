@@ -8,21 +8,16 @@ from app.validators.employee_validator import (
     validar_contrasena
 )
 
+from app.serializers import (
+    serialize_employee,
+    serialize_employee_list
+)
+
 
 def get_all_employees():
     empleados = employee_repository.get_all()
 
-    return [
-        {
-            "id": empleado.id,
-            "nombre": empleado.nombre,
-            "telefono": empleado.telefono,
-            "codigo": empleado.codigo,
-            "administrador": empleado.administrador
-        }
-        for empleado in empleados
-    ]
-
+    return serialize_employee_list(empleados), 200
 
 def get_employee_by_id(employee_id):
     empleado = employee_repository.get_by_id(employee_id)
@@ -32,13 +27,7 @@ def get_employee_by_id(employee_id):
             "error": "Empleado no encontrado"
         }, 404
 
-    return {
-        "id": empleado.id,
-        "nombre": empleado.nombre,
-        "telefono": empleado.telefono,
-        "codigo": empleado.codigo,
-        "administrador": empleado.administrador
-    }, 200
+    return serialize_employee(empleado), 200
 
 
 def create_employee(data):

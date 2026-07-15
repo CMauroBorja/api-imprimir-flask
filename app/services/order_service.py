@@ -13,29 +13,14 @@ from app.validators.order_validator import (
     validar_observaciones
 )
 
+from app.serializers import (serialize_order_list)
 from app.repositories import order_repository
 
 
 def get_all_orders():
     registros = order_repository.get_all()
-
-    return [
-        {
-            "id": r.id,
-            "nombreCliente": r.nombreCliente,
-            "fechaEntrega": r.fechaEntrega.strftime("%Y-%m-%d %H:%M"),
-            "fechaCreacion": r.fechaCreacion.strftime("%Y-%m-%d %H:%M"),
-            "valorTotal": float(r.valorTotal),
-            "abono": float(r.abono),
-            "saldo": float(r.saldo),
-            "celular": r.celular,
-            "telefono": r.telefono,
-            "observaciones": r.observaciones,
-            "vendedor": r.vendedor,
-            "finalizada": r.finalizada
-        }
-        for r in registros
-    ]
+    
+    return serialize_order_list(registros), 200
     
 
 def delete_order_by_id(order_id):

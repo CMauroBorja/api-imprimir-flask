@@ -12,7 +12,9 @@ order_bp = Blueprint("orders", __name__)
 @order_bp.route("/getOrders", methods=["GET"])
 def get_orders():
     try:
-        return jsonify(get_all_orders()), 200
+        response, status = get_all_orders()
+
+        return jsonify(response), status
 
     except Exception as e:
         return jsonify({

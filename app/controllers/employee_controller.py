@@ -14,7 +14,9 @@ employee_bp = Blueprint("employees", __name__)
 def get_all():
 
     try:
-        return jsonify(get_all_employees()), 200
+        response, status = get_all_employees()
+
+        return jsonify(response), status
 
     except Exception as e:
         return jsonify({
