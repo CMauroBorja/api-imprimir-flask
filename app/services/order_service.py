@@ -1,6 +1,9 @@
 from datetime import datetime
-
+from app.config.logging_config import logger
 from app.models import Registro
+from app.serializers import (serialize_order_list)
+from app.repositories import order_repository
+
 from app.services.printing.printer_service import (
     imprimir_registro,
     imprimir_solo_cliente
@@ -13,10 +16,6 @@ from app.validators.order_validator import (
     validar_observaciones
 )
 
-from app.serializers import (serialize_order_list)
-from app.repositories import order_repository
-
-
 def get_all_orders():
     registros = order_repository.get_all()
     
@@ -28,18 +27,32 @@ def delete_order_by_id(order_id):
         registro = order_repository.get_by_id(order_id)
 
         if not registro:
+            
+            logger.warning(
+                f"Intento de eliminar una orden inexistente: {order_id}"
+            )
+            
             return {
                 "error": "Orden no encontrada"
             }, 404
 
         order_repository.delete(registro)
         order_repository.commit()
+        
+        logger.info(
+            f"Orden eliminada: {order_id}"
+        )
 
         return {
             "message": "Orden eliminada correctamente"
         }, 200
     except Exception as e:
         order_repository.rollback()
+        
+        logger.exception(
+            f"Error al eliminar orden: {order_id}"
+        )
+        
         raise
     
     
@@ -47,6 +60,9 @@ def reprint_order_by_id(order_id, reprint_type):
     registro = order_repository.get_by_id(order_id)
 
     if not registro:
+        logger.warning(
+            f"Orden no encontrada para reimpresión: {order_id}"
+        )
         return {
             "error": "Orden no encontrada"
         }, 404
@@ -58,6 +74,10 @@ def reprint_order_by_id(order_id, reprint_type):
             cantidad_copias=1
         )
 
+        logger.info(
+            f"Reimpresión realizada para la orden {order_id}. Tipo: {reprint_type}"
+        )
+        
         return {
             "message":
             "Reimpresas: copia del cliente y copia del negocio"
@@ -66,6 +86,10 @@ def reprint_order_by_id(order_id, reprint_type):
     elif reprint_type == "2":
         imprimir_solo_cliente(registro)
 
+        logger.info(
+            f"Reimpresión realizada para la orden {order_id}. Tipo: {reprint_type}"
+        )
+        
         return {
             "message":
             "Reimpresa: solo copia del cliente"
@@ -77,12 +101,20 @@ def reprint_order_by_id(order_id, reprint_type):
             solo_negocio=True,
             cantidad_copias=1
         )
+    
+        logger.info(
+            f"Reimpresión realizada para la orden {order_id}. Tipo: {reprint_type}"
+        )
 
         return {
             "message":
             "Reimpresa: solo copia del negocio"
         }, 200
 
+    logger.warning(
+        f"Tipo de reimpresión inválido ({reprint_type}) para la orden {order_id}"
+    )
+    
     return {
         "error": "Tipo de reimpresión inválido"
     }, 400
@@ -93,6 +125,11 @@ def update_order(order_id, data):
         registro = order_repository.get_by_id(order_id)
 
         if not registro:
+            
+            logger.warning(
+                f"Orden no encontrada para actualización: {order_id}"
+            )
+            
             return {
                 "error": "Orden no encontrada"
             }, 404
@@ -213,6 +250,10 @@ def update_order(order_id, data):
             )
 
         order_repository.commit()
+        
+        logger.info(
+            f"Orden actualizada: {order_id}"
+        )
 
         return {
             "message":
@@ -220,7 +261,13 @@ def update_order(order_id, data):
         }, 200
 
     except Exception:
+        
         order_repository.rollback()
+        
+        logger.exception(
+            f"Error al actualizar la orden: {order_id}"
+        )
+        
         raise
     
     
@@ -307,6 +354,11 @@ def create_order(data):
     vendedor = order_repository.get_employee_by_code(data["vendedor"])
 
     if not vendedor:
+        
+        logger.warning(
+            f"Vendedor no encontrado: {data['vendedor']}"
+        )
+        
         return {
             "error":
             "El código del vendedor no es válido"
@@ -352,6 +404,10 @@ def create_order(data):
             order_repository.reseed_order_identity(ultimo_id)
 
             order_repository.commit()
+            
+            logger.warning(
+                f"Secuencia de IDs corregida. Último ID válido: {ultimo_id}"
+            )
 
             return {
                 "error":
@@ -381,6 +437,10 @@ def create_order(data):
         )
 
         order_repository.commit()
+        
+        logger.info(
+            f"Orden creada correctamente: {nuevo_registro.id}"
+        )
 
         return {
             "message":
@@ -390,5 +450,11 @@ def create_order(data):
         }, 201
 
     except Exception:
+        
         order_repository.rollback()
+        
+        logger.exception(
+            "Error al crear la orden"
+        )
+        
         raise

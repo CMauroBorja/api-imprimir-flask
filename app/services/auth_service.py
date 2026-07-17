@@ -1,4 +1,5 @@
 from app.repositories import employee_repository
+from app.config.logging_config import logger
 
 from app.validators.auth_validator import (
     validar_login
@@ -10,6 +11,10 @@ def login_user(data):
     valid, error = validar_login(data)
 
     if not valid:
+        logger.warning(
+            f"Intento de login inválido: {error}"
+        )
+
         return {
             "error": error
         }, 400
@@ -19,6 +24,11 @@ def login_user(data):
     )
 
     if not empleado:
+
+        logger.warning(
+            f"Intento de login con código inexistente: {data['codigo']}"
+        )
+
         return {
             "error":
             "El codigo de usuario no es valido"
@@ -28,10 +38,19 @@ def login_user(data):
         empleado.contrasena
         != data["contrasena"].strip()
     ):
+
+        logger.warning(
+            f"Contraseña incorrecta para el usuario: {empleado.codigo}"
+        )
+
         return {
             "error":
             "La contraseña es incorrecta"
         }, 401
+
+    logger.info(
+        f"Login exitoso: {empleado.codigo}"
+    )
 
     return {
         "message":
