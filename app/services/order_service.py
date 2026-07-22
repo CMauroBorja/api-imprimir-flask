@@ -40,13 +40,13 @@ def delete_order_by_id(order_id):
         order_repository.commit()
         
         logger.info(
-            f"Orden eliminada: {order_id}"
+            f"Orden {order_id} eliminada"
         )
 
         return {
             "message": "Orden eliminada correctamente"
         }, 200
-    except Exception as e:
+    except Exception:
         order_repository.rollback()
         
         logger.exception(
@@ -75,7 +75,7 @@ def reprint_order_by_id(order_id, reprint_type):
         )
 
         logger.info(
-            f"Reimpresión realizada para la orden {order_id}. Tipo: {reprint_type}"
+            f"Orden {order_id} reimpresa. Tipo {reprint_type}"
         )
         
         return {
@@ -87,7 +87,7 @@ def reprint_order_by_id(order_id, reprint_type):
         imprimir_solo_cliente(registro)
 
         logger.info(
-            f"Reimpresión realizada para la orden {order_id}. Tipo: {reprint_type}"
+            f"Orden {order_id} reimpresa. Tipo {reprint_type}"
         )
         
         return {
@@ -103,7 +103,7 @@ def reprint_order_by_id(order_id, reprint_type):
         )
     
         logger.info(
-            f"Reimpresión realizada para la orden {order_id}. Tipo: {reprint_type}"
+            f"Orden {order_id} reimpresa. Tipo {reprint_type}"
         )
 
         return {
@@ -252,7 +252,7 @@ def update_order(order_id, data):
         order_repository.commit()
         
         logger.info(
-            f"Orden actualizada: {order_id}"
+            f"Orden {order_id} actualizada"
         )
 
         return {
@@ -439,7 +439,7 @@ def create_order(data):
         order_repository.commit()
         
         logger.info(
-            f"Orden creada correctamente: {nuevo_registro.id}"
+            f"Orden {nuevo_registro.id} creada por el vendedor {nuevo_registro.vendedor}"
         )
 
         return {
