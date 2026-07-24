@@ -1,6 +1,6 @@
 from app.repositories import employee_repository
 from app.config.logging_config import logger
-
+from app.security.password_service import verify_password
 from app.validators.auth_validator import (
     validar_login
 )
@@ -35,8 +35,7 @@ def login_user(data):
         }, 404
 
     if (
-        empleado.contrasena
-        != data["contrasena"].strip()
+        not verify_password(data["contrasena"].strip(), empleado.contrasena)
     ):
 
         logger.warning(

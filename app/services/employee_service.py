@@ -1,6 +1,7 @@
 from app.config.logging_config import logger
 from app.models import Empleado
 from app.repositories import employee_repository
+from app.security.password_service import hash_password
 
 from app.validators.employee_validator import (
     validar_nombre,
@@ -87,7 +88,7 @@ def create_employee(data):
             nombre=data["nombre"].strip(),
             telefono=data["telefono"].strip(),
             codigo=data["codigo"].strip(),
-            contrasena=data["contrasena"].strip(),
+            contrasena=hash_password(data["contrasena"].strip()),
             administrador=bool(data["administrador"])
         )
 
@@ -158,7 +159,7 @@ def update_employee(codigo, data):
                     "error": "Contraseña inválida"
                 }, 400
 
-            empleado.contrasena = data["contrasena"].strip()
+            empleado.contrasena = hash_password(data["contrasena"].strip())
 
         if "administrador" in data:
             empleado.administrador = bool(
