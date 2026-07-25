@@ -15,6 +15,12 @@ from app.serializers import (
     serialize_employee_list
 )
 
+from app.exceptions.custom_exceptions import (
+    ValidationError,
+    NotFoundError,
+    ConflictError
+)
+
 
 def get_all_employees():
     empleados = employee_repository.get_all()
@@ -26,9 +32,7 @@ def get_employee_by_id(employee_id):
     empleado = employee_repository.get_by_id(employee_id)
 
     if not empleado:
-        return {
-            "error": "Empleado no encontrado"
-        }, 404
+        raise NotFoundError("Empleado no encontrado")
 
     return serialize_employee(empleado), 200
 
@@ -47,29 +51,19 @@ def create_employee(data):
         field not in data
         for field in required_fields
     ):
-        return {
-            "error": "Faltan datos requeridos"
-        }, 400
+        raise ValidationError("Datos incompletos para crear empleado")
 
     if not validar_nombre(data["nombre"]):
-        return {
-            "error": "Nombre inválido"
-        }, 400
+        raise ValidationError("Nombre inválido")
 
     if not validar_telefono(data["telefono"]):
-        return {
-            "error": "Teléfono inválido"
-        }, 400
+        raise ValidationError("Teléfono inválido")
 
     if not validar_codigo(data["codigo"]):
-        return {
-            "error": "Código inválido"
-        }, 400
+        raise ValidationError("Código inválido")
 
     if not validar_contrasena(data["contrasena"]):
-        return {
-            "error": "Contraseña inválida"
-        }, 400
+        raise ValidationError("Contraseña inválida")
 
     empleado_existente = employee_repository.get_by_code(data["codigo"].strip())
 
@@ -77,10 +71,7 @@ def create_employee(data):
         logger.warning(
             f"Intento de crear empleado con código existente: {data['codigo']}"
         )
-        
-        return {
-            "error": "El código de usuario ya existe"
-        }, 409
+        raise ConflictError("El código de usuario ya existe")
 
     try:
 
@@ -123,29 +114,23 @@ def update_employee(codigo, data):
                 f"Empleado no encontrado: {codigo}"
             )
             
-            return {
-                "error": "Empleado no encontrado"
-            }, 404
+            raise NotFoundError("Empleado no encontrado")
 
         if "nombre" in data:
 
             if not validar_nombre(data["nombre"]):
                 logger.warning(
                     "Nombre inválido al actualizar empleado"
-)
+                )
                 
-                return {
-                    "error": "Nombre inválido"
-                }, 400
+                raise ValidationError("Nombre inválido")
 
             empleado.nombre = data["nombre"].strip()
 
         if "telefono" in data:
 
             if not validar_telefono(data["telefono"]):
-                return {
-                    "error": "Teléfono inválido"
-                }, 400
+                raise ValidationError("Teléfono inválido")
 
             empleado.telefono = data["telefono"].strip()
 
@@ -155,9 +140,7 @@ def update_employee(codigo, data):
         ):
 
             if not validar_contrasena(data["contrasena"]):
-                return {
-                    "error": "Contraseña inválida"
-                }, 400
+                raise ValidationError("Contraseña inválida")
 
             empleado.contrasena = hash_password(data["contrasena"].strip())
 
