@@ -20,19 +20,10 @@ auth_bp = Blueprint(
 )
 def login():
 
-    try:
+    response, status = login_user(
+        request.json
+    )
 
-        response, status = login_user(
-            request.json
-        )
-
-        return jsonify(
-            response
-        ), status
-
-    except Exception as e:
-
-        return jsonify({
-            "error":
-            f"Error al iniciar sesión: {str(e)}"
-        }), 500
+    return jsonify(
+        response
+    ), status

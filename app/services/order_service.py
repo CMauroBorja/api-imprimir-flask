@@ -16,6 +16,13 @@ from app.validators.order_validator import (
     validar_observaciones
 )
 
+from app.exceptions.custom_exceptions import (
+    ConflictError,
+    ValidationError,
+    NotFoundError,
+    UnauthorizedError
+)
+
 def get_all_orders():
     registros = order_repository.get_all()
     
@@ -24,21 +31,17 @@ def get_all_orders():
 
 def delete_order_by_id(order_id):
     try:
+
         registro = order_repository.get_by_id(order_id)
 
         if not registro:
-            
-            logger.warning(
-                f"Intento de eliminar una orden inexistente: {order_id}"
+            raise NotFoundError(
+                "Orden no encontrada"
             )
-            
-            return {
-                "error": "Orden no encontrada"
-            }, 404
 
         order_repository.delete(registro)
         order_repository.commit()
-        
+
         logger.info(
             f"Orden {order_id} eliminada"
         )
@@ -46,13 +49,11 @@ def delete_order_by_id(order_id):
         return {
             "message": "Orden eliminada correctamente"
         }, 200
+
     except Exception:
+
         order_repository.rollback()
-        
-        logger.exception(
-            f"Error al eliminar orden: {order_id}"
-        )
-        
+
         raise
     
     
@@ -60,79 +61,60 @@ def reprint_order_by_id(order_id, reprint_type):
     registro = order_repository.get_by_id(order_id)
 
     if not registro:
-        logger.warning(
-            f"Orden no encontrada para reimpresión: {order_id}"
+
+        raise NotFoundError(
+            "Orden no encontrada"
         )
-        return {
-            "error": "Orden no encontrada"
-        }, 404
 
     if reprint_type == "1":
+        
         imprimir_registro(
             registro,
             solo_negocio=False,
             cantidad_copias=1
         )
 
-        logger.info(
-            f"Orden {order_id} reimpresa. Tipo {reprint_type}"
-        )
-        
-        return {
-            "message":
-            "Reimpresas: copia del cliente y copia del negocio"
-        }, 200
+        mensaje = "Reimpresas: copia del cliente y copia del negocio"
 
     elif reprint_type == "2":
+        
         imprimir_solo_cliente(registro)
 
-        logger.info(
-            f"Orden {order_id} reimpresa. Tipo {reprint_type}"
-        )
-        
-        return {
-            "message":
-            "Reimpresa: solo copia del cliente"
-        }, 200
+        mensaje = "Reimpresa: solo copia del cliente"
 
     elif reprint_type == "3":
+        
         imprimir_registro(
             registro,
             solo_negocio=True,
             cantidad_copias=1
         )
     
-        logger.info(
-            f"Orden {order_id} reimpresa. Tipo {reprint_type}"
-        )
-
-        return {
-            "message":
-            "Reimpresa: solo copia del negocio"
-        }, 200
-
-    logger.warning(
-        f"Tipo de reimpresión inválido ({reprint_type}) para la orden {order_id}"
+        mensaje = "Reimpresa: solo copia del negocio"
+    
+    else:
+        
+        raise ValidationError(
+            "Tipo de reimpresión inválido")
+        
+    logger.info(
+        f"Orden {order_id} reimpresa. Tipo: {reprint_type}"
     )
     
     return {
-        "error": "Tipo de reimpresión inválido"
-    }, 400
-    
-    
+        "message": mensaje
+    }, 200
+
+
 def update_order(order_id, data):
     try:
         registro = order_repository.get_by_id(order_id)
 
         if not registro:
             
-            logger.warning(
-                f"Orden no encontrada para actualización: {order_id}"
+            raise NotFoundError(
+                "Orden no encontrada"
             )
-            
-            return {
-                "error": "Orden no encontrada"
-            }, 404
 
         # Validar datos numéricos
         if any(
@@ -169,19 +151,16 @@ def update_order(order_id, data):
             )
 
             if not valid:
-                return {
-                    "error": error_message
-                }, 400
+                raise ValidationError(error_message)
 
         if "nombreCliente" in data:
 
             if not validar_nombre_cliente(
                 data["nombreCliente"]
             ):
-                return {
-                    "error":
+                raise ValidationError(
                     "El nombre del cliente debe tener al menos 3 caracteres"
-                }, 400
+                )
 
             registro.nombreCliente = (
                 data["nombreCliente"]
@@ -216,10 +195,9 @@ def update_order(order_id, data):
             if not validar_celular(
                 data["celular"]
             ):
-                return {
-                    "error":
+                raise ValidationError(
                     "El número de celular debe tener exactamente 10 dígitos"
-                }, 400
+                )
 
             registro.celular = (
                 data["celular"]
@@ -235,10 +213,9 @@ def update_order(order_id, data):
             if not validar_observaciones(
                 data["observaciones"]
             ):
-                return {
-                    "error":
+                raise ValidationError(
                     "Las observaciones no cumplen con los requisitos"
-                }, 400
+                )
 
             registro.observaciones = (
                 data["observaciones"]
@@ -264,10 +241,6 @@ def update_order(order_id, data):
         
         order_repository.rollback()
         
-        logger.exception(
-            f"Error al actualizar la orden: {order_id}"
-        )
-        
         raise
     
     
@@ -289,34 +262,29 @@ def create_order(data):
         field not in data
         for field in required_fields
     ):
-        return {
-            "error": "Faltan datos requeridos"
-        }, 400
+        raise ValidationError(
+            "Faltan campos requeridos"
+        )
 
     if not validar_nombre_cliente(data["nombreCliente"]):
-        return {
-            "error":
+        raise ValidationError(
             "El nombre del cliente debe tener al menos 3 caracteres"
-        }, 400
+        )
 
     if not validar_celular(data["celular"]):
-        return {
-            "error":
+        raise ValidationError(
             "El número de celular debe tener 10 dígitos"
-        }, 400
+        )
 
     if not validar_observaciones(data["observaciones"]):
-        return {
-            "error":
+        raise ValidationError(
             "Las observaciones no cumplen con los requisitos"
-        }, 400
+        )
         
     valid, error_message = validar_datos_numericos(data)
 
     if not valid:
-        return {
-            "error": error_message
-        }, 400
+        raise ValidationError(error_message)
 
     observaciones_raw = data["observaciones"]
 
@@ -334,35 +302,27 @@ def create_order(data):
             .decode("utf-8")
         )
     except UnicodeError:
-        return {
-            "error":
+        raise ValidationError(
             "Error en la codificación del texto"
-        }, 400
+        )
 
     if len(observaciones) < 5:
-        return {
-            "error":
+        raise ValidationError(
             "Las observaciones deben tener al menos 5 caracteres"
-        }, 400
+        )
 
     if len(observaciones) > 500:
-        return {
-            "error":
+        raise ValidationError(
             "Las observaciones no pueden exceder 500 caracteres"
-        }, 400
+        )
 
     vendedor = order_repository.get_employee_by_code(data["vendedor"])
 
     if not vendedor:
         
-        logger.warning(
-            f"Vendedor no encontrado: {data['vendedor']}"
-        )
-        
-        return {
-            "error":
+        raise NotFoundError(
             "El código del vendedor no es válido"
-        }, 404
+        )
 
     try:
 
@@ -405,17 +365,9 @@ def create_order(data):
 
             order_repository.commit()
             
-            logger.warning(
-                f"Secuencia de IDs corregida. Último ID válido: {ultimo_id}"
+            raise ConflictError(
+                "Secuencia de IDs corregida. Reintente guardar."
             )
-
-            return {
-                "error":
-                (
-                    "Secuencia de IDs corregida. "
-                    "Reintente guardar."
-                )
-            }, 409
 
         cantidad_copias = max(
             1,
@@ -448,13 +400,12 @@ def create_order(data):
             "id":
             nuevo_registro.id
         }, 201
+    
+    except ConflictError:
+        raise
 
     except Exception:
         
         order_repository.rollback()
-        
-        logger.exception(
-            "Error al crear la orden"
-        )
         
         raise

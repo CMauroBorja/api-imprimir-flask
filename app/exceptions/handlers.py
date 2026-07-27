@@ -9,7 +9,7 @@ def register_error_handlers(app):
     @app.errorhandler(AppException)
     def handle_app_exception(error):
 
-        logger.warning(error.message)
+        logger.log(error.log_level, error.message)
 
         return jsonify({
             "error": error.message

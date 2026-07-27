@@ -4,6 +4,9 @@ from app.repositories import order_repository
 from app.services.printing.printer_service import (
     imprimir_registro
 )
+from app.exceptions.custom_exceptions import (
+    NotFoundError
+)
 
 print_bp = Blueprint(
     "print",
@@ -17,28 +20,18 @@ print_bp = Blueprint(
 )
 def test_print(registro_id):
 
-    try:
+    registro = order_repository.get_by_id(
+        registro_id
+    )
 
-        registro = order_repository.get_by_id(
-            registro_id
+    if not registro:
+        raise NotFoundError(
+            "Registro no encontrado"
         )
 
-        if not registro:
-            return jsonify({
-                "success": False,
-                "error": "Registro no encontrado"
-            }), 404
+    imprimir_registro(registro)
 
-        imprimir_registro(registro)
-
-        return jsonify({
-            "success": True,
-            "message": "Impresión enviada"
-        }), 200
-
-    except Exception as e:
-
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+    return jsonify({
+        "success": True,
+        "message": "Impresión enviada"
+    }), 200

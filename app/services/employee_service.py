@@ -24,16 +24,13 @@ from app.exceptions.custom_exceptions import (
 
 def get_all_employees():
     empleados = employee_repository.get_all()
-
     return serialize_employee_list(empleados), 200
 
 
 def get_employee_by_id(employee_id):
     empleado = employee_repository.get_by_id(employee_id)
-
     if not empleado:
         raise NotFoundError("Empleado no encontrado")
-
     return serialize_employee(empleado), 200
 
 
@@ -67,10 +64,7 @@ def create_employee(data):
 
     empleado_existente = employee_repository.get_by_code(data["codigo"].strip())
 
-    if empleado_existente:
-        logger.warning(
-            f"Intento de crear empleado con código existente: {data['codigo']}"
-        )
+    if empleado_existente:       
         raise ConflictError("El código de usuario ya existe")
 
     try:
@@ -94,11 +88,8 @@ def create_employee(data):
             "message": "Empleado creado exitosamente"
         }, 201
 
-    except Exception:
+    except Exception:        
         employee_repository.rollback()
-        logger.exception(
-            "Error al crear empleado"
-        )
         raise
 
 
@@ -108,21 +99,12 @@ def update_employee(codigo, data):
 
         empleado = employee_repository.get_by_code(codigo)
 
-        if not empleado:
-            
-            logger.warning(
-                f"Empleado no encontrado: {codigo}"
-            )
-            
+        if not empleado:            
             raise NotFoundError("Empleado no encontrado")
 
         if "nombre" in data:
 
             if not validar_nombre(data["nombre"]):
-                logger.warning(
-                    "Nombre inválido al actualizar empleado"
-                )
-                
                 raise ValidationError("Nombre inválido")
 
             empleado.nombre = data["nombre"].strip()
@@ -159,11 +141,6 @@ def update_employee(codigo, data):
             "message": "Empleado actualizado correctamente"
         }, 200
 
-    except Exception:
-        employee_repository.rollback()
-        
-        logger.exception(
-            f"Error al actualizar empleado: {codigo}"
-        )
-        
+    except Exception:       
+        employee_repository.rollback()      
         raise
