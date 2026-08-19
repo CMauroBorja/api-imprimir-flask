@@ -40,3 +40,8 @@ class ConflictError(AppException):
 class DatabaseError(AppException):
     status_code = 500
     log_level = logging.ERROR
+    
+
+class PrinterError(AppException):
+    status_code = 500
+    log_level = logging.ERROR

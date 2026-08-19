@@ -1,6 +1,7 @@
 import time
 
 from app.config.logging_config import logger
+from app.exceptions.custom_exceptions import PrinterError
 
 from app.services.printing.windows_printer import (
     enviar_a_impresora
@@ -69,11 +70,7 @@ def imprimir_registro(
 
     except Exception as e:
 
-        logger.exception(
-            f"Error al imprimir la orden {registro.id}"
-        )
-
-        raise RuntimeError(
+        raise PrinterError(
             f"Error al imprimir: {e}"
         ) from e
 
@@ -98,10 +95,6 @@ def imprimir_solo_cliente(registro):
 
     except Exception as e:
 
-        logger.exception(
-            f"Error al imprimir el ticket del cliente. Orden: {registro.id}"
-        )
-
-        raise RuntimeError(
+        raise PrinterError(
             f"Error al imprimir ticket del cliente: {e}"
         ) from e

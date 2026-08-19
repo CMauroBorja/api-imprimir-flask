@@ -1,12 +1,9 @@
 from flask import Blueprint, jsonify
 
-from app.repositories import order_repository
-from app.services.printing.printer_service import (
-    imprimir_registro
+from app.services.print_service import (
+    print_order
 )
-from app.exceptions.custom_exceptions import (
-    NotFoundError
-)
+
 
 print_bp = Blueprint(
     "print",
@@ -15,23 +12,13 @@ print_bp = Blueprint(
 
 
 @print_bp.route(
-    "/test-print/<int:registro_id>",
-    methods=["GET"]
+    "/print-order/<int:registro_id>",
+    methods=["POST"]
 )
-def test_print(registro_id):
+def print_order_route(registro_id):
 
-    registro = order_repository.get_by_id(
+    response, status = print_order(
         registro_id
     )
 
-    if not registro:
-        raise NotFoundError(
-            "Registro no encontrado"
-        )
-
-    imprimir_registro(registro)
-
-    return jsonify({
-        "success": True,
-        "message": "Impresión enviada"
-    }), 200
+    return jsonify(response), status

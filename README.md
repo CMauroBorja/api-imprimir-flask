@@ -281,7 +281,7 @@ Responsable de:
 Endpoints:
 
 ```http
-GET /test-print/<registro_id>
+GET /print_order/<registro_id>
 ```
 
 Utilizado para pruebas de impresión.
