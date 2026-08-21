@@ -35,7 +35,7 @@ def get_employee_by_id(employee_id):
 
 
 def create_employee(data):
-
+    
     required_fields = [
         "nombre",
         "telefono",
@@ -80,67 +80,70 @@ def create_employee(data):
         employee_repository.add(nuevo_empleado)
         employee_repository.commit()
         
-        logger.info(
-            f"Empleado creado: {nuevo_empleado.codigo}"
-        )
-        
-        return {
-            "message": "Empleado creado exitosamente"
-        }, 201
-
-    except Exception:        
+    except Exception:
         employee_repository.rollback()
         raise
 
+    logger.info(
+        f"Empleado creado: {nuevo_empleado.codigo}"
+    )
+
+    return {
+        "message": "Empleado creado exitosamente"
+    }, 201
+
 
 def update_employee(codigo, data):
+    
+    empleado = employee_repository.get_by_code(codigo)
+
+    if not empleado:
+        raise NotFoundError("Empleado no encontrado")
+
+    if "nombre" in data:
+
+        if not validar_nombre(data["nombre"]):
+            raise ValidationError("Nombre inválido")
+
+        empleado.nombre = data["nombre"].strip()
+
+    if "telefono" in data:
+
+        if not validar_telefono(data["telefono"]):
+            raise ValidationError("Teléfono inválido")
+
+        empleado.telefono = data["telefono"].strip()
+
+    if (
+        "contrasena" in data
+        and data["contrasena"]
+    ):
+
+        if not validar_contrasena(data["contrasena"]):
+            raise ValidationError("Contraseña inválida")
+
+        empleado.contrasena = hash_password(
+            data["contrasena"].strip()
+        )
+
+    if "administrador" in data:
+        empleado.administrador = bool(
+            data["administrador"]
+        )
 
     try:
 
-        empleado = employee_repository.get_by_code(codigo)
-
-        if not empleado:            
-            raise NotFoundError("Empleado no encontrado")
-
-        if "nombre" in data:
-
-            if not validar_nombre(data["nombre"]):
-                raise ValidationError("Nombre inválido")
-
-            empleado.nombre = data["nombre"].strip()
-
-        if "telefono" in data:
-
-            if not validar_telefono(data["telefono"]):
-                raise ValidationError("Teléfono inválido")
-
-            empleado.telefono = data["telefono"].strip()
-
-        if (
-            "contrasena" in data
-            and data["contrasena"]
-        ):
-
-            if not validar_contrasena(data["contrasena"]):
-                raise ValidationError("Contraseña inválida")
-
-            empleado.contrasena = hash_password(data["contrasena"].strip())
-
-        if "administrador" in data:
-            empleado.administrador = bool(
-                data["administrador"]
-            )
-
         employee_repository.commit()
-        
-        logger.info(
-            f"Empleado actualizado: {empleado.codigo}"
-        )
 
-        return {
-            "message": "Empleado actualizado correctamente"
-        }, 200
+    except Exception:
 
-    except Exception:       
-        employee_repository.rollback()      
+        employee_repository.rollback()
         raise
+
+    logger.info(
+        f"Empleado actualizado: {empleado.codigo}"
+    )
+
+    return {
+        "message": "Empleado actualizado correctamente"
+    }, 200
