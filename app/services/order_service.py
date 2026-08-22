@@ -20,7 +20,7 @@ from app.exceptions.custom_exceptions import (
     ConflictError,
     ValidationError,
     NotFoundError,
-    UnauthorizedError
+    PrinterError
 )
 
 def get_all_orders():
@@ -390,25 +390,6 @@ def create_order(data):
                 "Secuencia de IDs corregida. Reintente guardar."
             )
 
-        cantidad_copias = max(
-            1,
-            int(
-                data.get(
-                    "cantidadObjetos",
-                    1
-                )
-            )
-        )
-
-        imprimir_registro(
-            nuevo_registro,
-            solo_negocio=data.get(
-                "tieneWhatsapp",
-                False
-            ),
-            cantidad_copias=cantidad_copias
-        )
-
         order_repository.commit()
 
     except ConflictError:
@@ -419,6 +400,42 @@ def create_order(data):
         order_repository.rollback()
         raise
 
+    cantidad_copias = max(
+        1,
+        int(
+            data.get(
+                "cantidadObjetos",
+                1
+            )
+        )
+    )
+
+    try:
+
+        imprimir_registro(
+            nuevo_registro,
+            solo_negocio=data.get(
+                "tieneWhatsapp",
+                False
+            ),
+            cantidad_copias=cantidad_copias
+        )
+
+    except PrinterError:
+
+        logger.error(
+            f"Orden {nuevo_registro.id} "
+            f"creada pero no pudo imprimirse"
+        )
+
+        return {
+            "message": (
+                "Orden creada, pero no fue posible imprimirla"
+            ),
+            "id": nuevo_registro.id,
+            "impresion": False
+        }, 201
+
     logger.info(
         f"Orden {nuevo_registro.id} creada "
         f"por el vendedor {nuevo_registro.vendedor}"
@@ -426,5 +443,6 @@ def create_order(data):
 
     return {
         "message": "Datos guardados correctamente",
-        "id": nuevo_registro.id
+        "id": nuevo_registro.id,
+        "impresion": True
     }, 201
