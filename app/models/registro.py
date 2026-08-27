@@ -17,4 +17,6 @@ class Registro(db.Model):
     observaciones = db.Column(db.UnicodeText(500), nullable=False)
     vendedor = db.Column(db.String(50), nullable=False)
     finalizada = db.Column(db.Boolean, default=False, nullable=False)
+    fechaFinalizacion = db.Column(db.DateTime, nullable=True)
     medioPago = db.Column(db.String(20), nullable=False, default="efectivo")
+    abonos = db.relationship("Abono", backref="orden", lazy=True)

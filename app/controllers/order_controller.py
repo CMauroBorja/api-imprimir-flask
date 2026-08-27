@@ -2,10 +2,12 @@ from flask import Blueprint, jsonify, request
 
 from app.services.order_service import (
     get_all_orders,
+    get_order_by_id,
     delete_order_by_id,
     reprint_order_by_id,
     update_order,
-    create_order
+    create_order,
+    finalize_order
 )
 
 order_bp = Blueprint("orders", __name__)
@@ -15,6 +17,16 @@ order_bp = Blueprint("orders", __name__)
 def get_orders():
 
     response, status = get_all_orders()
+
+    return jsonify(response), status
+
+
+@order_bp.route("/getOrder/<int:id>", methods=["GET"])
+def get_order(id):
+
+    response, status = get_order_by_id(
+        id
+    )
 
     return jsonify(response), status
 
@@ -60,6 +72,17 @@ def actualizar_orden(id):
     response, status = update_order(
         id,
         request.json
+    )
+
+    return jsonify(response), status
+
+
+@order_bp.route("/finalizeOrder/<int:id>", methods=["POST"])
+def finalize_order_route(id):
+
+    response, status = finalize_order(
+        id,
+        request.json or {}
     )
 
     return jsonify(response), status

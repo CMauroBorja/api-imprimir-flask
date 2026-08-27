@@ -21,7 +21,15 @@ def serialize_order(registro):
         "telefono": registro.telefono,
         "observaciones": registro.observaciones,
         "vendedor": registro.vendedor,
-        "finalizada": registro.finalizada
+        "finalizada": registro.finalizada,
+        "fechaFinalizacion": (
+            registro.fechaFinalizacion.strftime(
+                "%Y-%m-%d %H:%M"
+            )
+            if registro.fechaFinalizacion
+            else None
+        ),
+        "medioPago": registro.medioPago
     }
 
 

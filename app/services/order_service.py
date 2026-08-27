@@ -1,7 +1,7 @@
 from datetime import datetime
 from app.config.logging_config import logger
-from app.models import Registro
-from app.serializers import (serialize_order_list)
+from app.models import Registro, Abono
+from app.serializers import serialize_order_list, serialize_order
 from app.repositories import order_repository
 
 from app.services.printing.printer_service import (
@@ -27,6 +27,27 @@ def get_all_orders():
     registros = order_repository.get_all()
     
     return serialize_order_list(registros), 200
+
+
+def get_order_by_id(order_id):
+    
+    registro = order_repository.get_by_id(
+        order_id
+    )
+
+    if not registro:
+        raise NotFoundError(
+            "Orden no encontrada"
+        )
+
+    if registro.finalizada:
+        raise ValidationError(
+            "Esta orden ya fue finalizada"
+        )
+
+    return serialize_order(
+        registro
+    ), 200
     
 
 def delete_order_by_id(order_id):
@@ -188,9 +209,32 @@ def update_order(order_id, data):
         )
 
     if "abono" in data:
-        registro.abono = float(
+        
+        abono_anterior = float(
+            registro.abono
+        )
+
+        nuevo_abono_total = float(
             data["abono"]
         )
+
+        diferencia_abono = (
+            nuevo_abono_total
+            - abono_anterior
+        )
+
+        registro.abono = nuevo_abono_total
+
+        if diferencia_abono > 0:
+
+            nuevo_abono = Abono(
+                orden_id=registro.id,
+                valor=diferencia_abono
+            )
+
+            order_repository.add(
+                nuevo_abono
+            )
 
     if "saldo" in data:
         registro.saldo = float(
@@ -224,10 +268,39 @@ def update_order(order_id, data):
             data["observaciones"]
         )
 
-    if "finalizada" in data:
-        registro.finalizada = bool(
-            data["finalizada"]
-        )
+        if "finalizada" in data:
+            
+            nueva_finalizada = bool(
+                data["finalizada"]
+            )
+
+            if nueva_finalizada and not registro.finalizada:
+
+                saldo_actual = float(
+                    data.get(
+                        "saldo",
+                        registro.saldo
+                    )
+                )
+
+                if abs(saldo_actual) > 0.01:
+                    raise ValidationError(
+                        "No se puede finalizar la orden. "
+                        "La orden debe estar totalmente pagada."
+                    )
+
+                registro.finalizada = True
+
+                registro.fechaFinalizacion = (
+                    datetime.now()
+                )
+
+            elif not nueva_finalizada and registro.finalizada:
+
+                raise ValidationError(
+                    "Esta orden ya fue finalizada "
+                    "y no puede volver a abrirse."
+                )
 
     try:
 
@@ -389,6 +462,18 @@ def create_order(data):
             raise ConflictError(
                 "Secuencia de IDs corregida. Reintente guardar."
             )
+            
+        abono_inicial = float(data["abono"])
+        
+        if abono_inicial > 0:
+            nuevo_abono = Abono(
+                orden_id=nuevo_registro.id,
+                valor=abono_inicial
+            )
+
+            order_repository.add(
+                nuevo_abono
+            )
 
         order_repository.commit()
 
@@ -446,3 +531,92 @@ def create_order(data):
         "id": nuevo_registro.id,
         "impresion": True
     }, 201
+    
+
+def finalize_order(order_id, data):
+    
+    registro = order_repository.get_by_id(
+        order_id
+    )
+
+    if not registro:
+        raise NotFoundError(
+            "Orden no encontrada"
+        )
+
+    if registro.finalizada:
+        raise ValidationError(
+            "Esta orden ya fue finalizada"
+        )
+
+    saldo_actual = float(
+        registro.saldo
+    )
+
+    abono_final = float(
+        data.get(
+            "abonoFinal",
+            0
+        )
+    )
+
+    if saldo_actual > 0:
+
+        if abono_final <= 0:
+            raise ValidationError(
+                "Debe ingresar el abono final."
+            )
+
+        if abs(
+            abono_final - saldo_actual
+        ) > 0.01:
+            raise ValidationError(
+                "El abono final debe ser igual "
+                "al saldo pendiente."
+            )
+
+    else:
+
+        abono_final = 0
+
+    try:
+
+        if abono_final > 0:
+
+            nuevo_abono = Abono(
+                orden_id=registro.id,
+                valor=abono_final
+            )
+
+            order_repository.add(
+                nuevo_abono
+            )
+
+            registro.abono = (
+                float(registro.abono)
+                + abono_final
+            )
+
+            registro.saldo = 0
+
+        registro.finalizada = True
+
+        registro.fechaFinalizacion = (
+            datetime.now()
+        )
+
+        order_repository.commit()
+
+    except Exception:
+
+        order_repository.rollback()
+        raise
+
+    logger.info(
+        f"Orden {order_id} finalizada"
+    )
+
+    return {
+        "message": "Orden finalizada correctamente",
+        "id": registro.id
+    }, 200
